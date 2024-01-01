@@ -3,8 +3,8 @@ const asyncHand = require("express-async-handler");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const generateSecretKey = require("../utils/generateSecretKey");
+
 const connection = require("../config/dbConfig");
-<<<<<<< HEAD
 const generateRefreshToken = require("../utils/generateRefreshToken");
 const { verifyRefreshToken } = require("../middlewares/authMiddleware");
 
@@ -15,25 +15,12 @@ const login = asyncHand((req, res) => {
   const { email, password } = req.body;
   const searchQuery = "SELECT * from users where email = ?";
 
-=======
-
-const secretKey = process.env.JWT_SECRET || generateSecretKey();
-console.log("SecretKey :", secretKey);
-// Login Form
-const login = asyncHand((req, res) => {
-  const { email, password } = req.body;
-  const searchQuery = "SELECT * from users where email = ?";
->>>>>>> 2fa92e80002f0479d45969a1847a25ae20e69a12
   try {
     connection.query(searchQuery, [email], async (err, results) => {
       if (err) {
         console.error("Error running the query : ", err);
         return res.status(500).json({ error: "Internal Server Error" });
       }
-<<<<<<< HEAD
-
-=======
->>>>>>> 2fa92e80002f0479d45969a1847a25ae20e69a12
       if (results.length === 0) {
         return res.status(401).json({ message: "Invalid credentials" });
       } else {
@@ -48,7 +35,6 @@ const login = asyncHand((req, res) => {
         const email = user.email;
         const user_type = user.user_type;
 
-<<<<<<< HEAD
         const token = jwt.sign({ email: email }, secretKey, {
           expiresIn: "1h",
         });
@@ -67,18 +53,6 @@ const login = asyncHand((req, res) => {
 
         res.status(200).json({
           message: "Logged in successfully",
-=======
-        const token = jwt.sign(
-          {
-            email: email,
-          },
-          secretKey,
-          { expiresIn: "1h" }
-        );
-        res.status(200).json({
-          message: "Logged in successfully",
-          token: token,
->>>>>>> 2fa92e80002f0479d45969a1847a25ae20e69a12
           email: email,
           uid: uid,
           user_type: user_type,
@@ -91,7 +65,6 @@ const login = asyncHand((req, res) => {
   }
 });
 
-<<<<<<< HEAD
 const refresh = asyncHand((req, res) => {
   const refreshToken = req.cookies["refreshToken"];
   if (!refreshToken) return res.sendStatus(401);
@@ -112,8 +85,6 @@ const refresh = asyncHand((req, res) => {
   res.sendStatus(200);
 });
 
-=======
->>>>>>> 2fa92e80002f0479d45969a1847a25ae20e69a12
 const handleUserExists = (res) => {
   return res.status(400).json({ error: "User already exists" });
 };
@@ -133,10 +104,6 @@ const signUp = asyncHand(async (req, res) => {
 
   console.log("Form Data:", formData);
 
-<<<<<<< HEAD
-=======
-  // Check password complexity
->>>>>>> 2fa92e80002f0479d45969a1847a25ae20e69a12
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
@@ -184,11 +151,16 @@ const signUp = asyncHand(async (req, res) => {
   }
 });
 
+const logout = asyncHand((req, res) => {
+  res.clearCookie("token", { httpOnly: true });
+  res.clearCookie("refreshToken", { httpOnly: true });
+
+  res.status(200).json({ message: "Logout successful" });
+});
+
 module.exports = {
   login,
   signUp,
-<<<<<<< HEAD
   refresh,
-=======
->>>>>>> 2fa92e80002f0479d45969a1847a25ae20e69a12
+  logout,
 };

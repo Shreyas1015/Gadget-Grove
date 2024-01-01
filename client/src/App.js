@@ -5,7 +5,6 @@ import SignUpPage from "./Pages/SignUpPage";
 import ForgetPass from "./Pages/ForgetPass";
 import ResetPass from "./Pages/ResetPass";
 
-
 const App = () => {
   return (
     <>
@@ -20,9 +19,7 @@ const App = () => {
               ""
             ) : // eslint-disable-next-line eqeqeq
             localStorage.getItem("user_type") == 2 ? (
-              <>
-               
-              </>
+              <></>
             ) : // eslint-disable-next-line eqeqeq
             localStorage.getItem("user_type") == 3 ? (
               ""
