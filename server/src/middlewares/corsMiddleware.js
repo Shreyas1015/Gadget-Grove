@@ -1,13 +1,9 @@
-const allowedOrigins = ["http://localhost:3000"];
+const cors = require("cors");
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (allowedOrigins.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-};
+const corsOptions = cors({
+  origin: "http://localhost:3000",
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+});
 
 module.exports = corsOptions;

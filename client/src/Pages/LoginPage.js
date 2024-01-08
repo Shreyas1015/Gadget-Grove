@@ -1,6 +1,9 @@
+/* eslint-disable eqeqeq */
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../API/axiosInstance";
+
+import secureLocalStorage from "react-secure-storage";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -29,31 +32,27 @@ const LoginPage = () => {
     try {
       const loginRes = await axiosInstance.post(
         `${process.env.REACT_APP_BASE_URL}/auth/login`,
-        {
-          email: formData.email,
-          password: formData.password,
-        }
+        formData
       );
 
       const userId = loginRes.data.uid;
       const userType = loginRes.data.user_type;
+      const isLogin = loginRes.data.isLogin;
 
-      localStorage.setItem("user_type", userType);
+      secureLocalStorage.setItem("uid", userId);
+      secureLocalStorage.setItem("user_type", userType);
+      secureLocalStorage.setItem("isLogin", isLogin);
 
-      // eslint-disable-next-line eqeqeq
-      if (userType == 1) {
-        navigate(`/?uid=${userId}`);
-        // eslint-disable-next-line eqeqeq
-      } else if (userType == 2) {
-        navigate(`/?uid=${userId}`);
-        // eslint-disable-next-line eqeqeq
-      } else if (userType == 3) {
-        navigate(`/?uid=${userId}`);
-        // eslint-disable-next-line eqeqeq
-      } else if (userType == 4) {
-        navigate(`/?uid=${userId}`);
+      const encryptedUID = localStorage.getItem("@secure.n.uid");
+      const decryptedUserType = secureLocalStorage.getItem("user_type");
+
+      if (decryptedUserType === 1) {
+        console.log("Navigating to Admin Dashboard");
+        navigate(`/admindashboard?uid=${encryptedUID}`);
+      } else if (decryptedUserType === 2) {
+        console.log("Navigating to Headphones Page");
+        navigate(`/headphones?uid=${encryptedUID}`);
       }
-
       alert("Logged In Successfully");
     } catch (error) {
       console.error(error);
@@ -69,7 +68,6 @@ const LoginPage = () => {
     <>
       <div className="container-fluid min-vh-100 ">
         <div className="row min-vh-100">
-       
           <div className="col-lg-6 m-0 p-0"></div>
           <div className="col-lg-6 m-0 p-0">
             <form

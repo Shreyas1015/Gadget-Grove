@@ -3,8 +3,7 @@ const asyncHand = require("express-async-handler");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const generateSecretKey = require("../utils/generateSecretKey");
-
-const connection = require("../config/dbConfig");
+const pool = require("../config/dbConfig");
 const generateRefreshToken = require("../utils/generateRefreshToken");
 const { verifyRefreshToken } = require("../middlewares/authMiddleware");
 
@@ -12,55 +11,56 @@ const secretKey = process.env.DB_SECRET_KEY || generateSecretKey();
 console.log("SecretKey :", secretKey);
 
 const login = asyncHand((req, res) => {
-  const { email, password } = req.body;
-  const searchQuery = "SELECT * from users where email = ?";
+  const formData = req.body;
+  const searchQuery = "SELECT * FROM users WHERE email = $1";
 
   try {
-    connection.query(searchQuery, [email], async (err, results) => {
+    pool.query(searchQuery, [formData.email], async (err, results) => {
       if (err) {
-        console.error("Error running the query : ", err);
+        console.error("Error running the query: ", err);
         return res.status(500).json({ error: "Internal Server Error" });
       }
-      if (results.length === 0) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      } else {
-        const user = results[0];
-        const isPasswordValid = await bcrypt.compare(password, user.password);
 
-        if (!isPasswordValid) {
-          return res.status(401).json({ error: "Invalid Credentials" });
-        }
-
-        const uid = user.uid;
-        const email = user.email;
-        const user_type = user.user_type;
-
-        const token = jwt.sign({ email: email }, secretKey, {
-          expiresIn: "1h",
-        });
-
-        console.log("Generated Token:", token);
-
-        const refreshToken = generateRefreshToken(email);
-
-        console.log("Refresh Token:", refreshToken);
-
-        res.cookie("token", token, {
-          httpOnly: true,
-        });
-
-        res.cookie("refreshToken", refreshToken, { httpOnly: true });
-
-        res.status(200).json({
-          message: "Logged in successfully",
-          email: email,
-          uid: uid,
-          user_type: user_type,
-        });
+      if (results.rows.length === 0) {
+        return res.status(401).json({ error: "Invalid credentials" });
       }
+
+      const user = results.rows[0];
+
+      if (!user || !user.password) {
+        return res.status(401).json({ error: "Invalid Credentials" });
+      }
+
+      const isPasswordValid = await bcrypt.compare(
+        formData.password,
+        user.password
+      );
+
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: "Invalid Credentials" });
+      }
+
+      const { uid, email, user_type } = user;
+
+      const token = jwt.sign({ email }, secretKey, { expiresIn: "10h" });
+      const refreshToken = generateRefreshToken(email);
+
+      console.log("Generated Token:", token);
+      console.log("Refresh Token:", refreshToken);
+
+      res.cookie("token", token, { httpOnly: true });
+      res.cookie("refreshToken", refreshToken, { httpOnly: true });
+
+      res.status(200).json({
+        message: "Logged in successfully",
+        email,
+        uid,
+        user_type,
+        isLogin: true,
+      });
     });
   } catch (error) {
-    console.error("Error running the query : ", error);
+    console.error("Error running the query: ", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -74,7 +74,7 @@ const refresh = asyncHand((req, res) => {
 
   console.log("Received Refresh Token:", refreshToken);
 
-  const token = jwt.sign(user, secretKey, { expiresIn: "1h" });
+  const token = jwt.sign(user, secretKey, { expiresIn: "10h" });
   const newRefreshToken = generateRefreshToken(user.email);
 
   console.log("New Access Token:", token);
@@ -118,34 +118,23 @@ const signUp = asyncHand(async (req, res) => {
   }
 
   try {
-    const searchQuery = "SELECT * FROM users WHERE email = ?";
+    const searchQuery = "SELECT * FROM users WHERE email = $1";
 
-    connection.query(searchQuery, [formData.email], async (err, result) => {
-      if (err) {
-        return handleServerError(res, "Error running the query: " + err);
-      }
+    const result = await pool.query(searchQuery, [formData.email]);
 
-      if (result.length > 0) {
-        return handleUserExists(res);
-      }
+    if (result.rows.length > 0) {
+      return handleUserExists(res);
+    }
 
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(formData.password, saltRounds);
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(formData.password, saltRounds);
 
-      const insertQuery =
-        "INSERT INTO users (email, password, user_type) VALUES (?, ?, 2)";
-      connection.query(
-        insertQuery,
-        [formData.email, hashedPassword],
-        (err, result) => {
-          if (err) {
-            return handleServerError(res, "Error inserting data: " + err);
-          } else {
-            return handleSuccess(res, "User Registered Successfully");
-          }
-        }
-      );
-    });
+    const insertQuery =
+      "INSERT INTO users (email, password, user_type) VALUES ($1, $2, 2)";
+
+    await pool.query(insertQuery, [formData.email, hashedPassword]);
+
+    return handleSuccess(res, "User Registered Successfully");
   } catch (error) {
     return handleServerError(res, "Error inserting data: " + error);
   }
@@ -158,9 +147,20 @@ const logout = asyncHand((req, res) => {
   res.status(200).json({ message: "Logout successful" });
 });
 
+const imageAuthenticator = asyncHand((req, res) => {
+  try {
+    const authenticationParameters = imagekit.getAuthenticationParameters();
+    console.log("Authentication Parameters:", authenticationParameters);
+    res.json(authenticationParameters);
+  } catch (error) {
+    console.error("Error generating authentication parameters:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
 module.exports = {
   login,
   signUp,
   refresh,
   logout,
+  imageAuthenticator,
 };

@@ -1,6 +1,6 @@
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
-const connection = require("../config/dbConfig");
+const pool = require("../config/dbConfig");
 const generateSecretKey = require("../utils/generateSecretKey");
 const generateRefreshSecretKey = require("../utils/generateRefreshSecretKey");
 
@@ -27,8 +27,8 @@ const authenticateToken = (req, res, next) => {
       } else {
         req.user = decoded;
         console.log("Decoded User :", decoded);
-        connection.query(
-          "SELECT * FROM users WHERE email = ?",
+        pool.query(
+          "SELECT * FROM users WHERE email = $1",
           [req.user.email],
           (err, result) => {
             if (err) {
@@ -36,19 +36,23 @@ const authenticateToken = (req, res, next) => {
               return res
                 .status(500)
                 .json({ message: "Error fetching user data" });
-            } else if (result.length === 0) {
+            } else if (result.rows.length === 0) {
               console.log("User not found in the database");
               return res
                 .status(404)
                 .json({ message: "User not found in the database" });
             } else {
-              req.uid = result[0].uid;
-              req.user_type = result[0].user_type;
-              req.email = result[0].email;
-
-              console.log("UID :", req.uid);
-              console.log("USER_TYPE :", req.user_type);
-              console.log("EMAIL :", req.email);
+              req.uid = result.rows[0].uid;
+              req.user_type = result.rows[0].user_type;
+              req.email = result.rows[0].email;
+              console.log(
+                "Fetched User : uid = ",
+                req.uid,
+                " user_type : ",
+                req.user_type,
+                " email : ",
+                req.email
+              );
               next();
             }
           }
@@ -74,7 +78,7 @@ const authenticateUser = async (req, res, next) => {
       .json({ message: "Unauthorized - Missing or invalid token" });
   }
 
-  const UserID = parseInt(req.body.uid);
+  const UserID = parseInt(req.body.decryptedUID);
   const authenticatedUserID = req.uid;
   console.log("authenticatedUserID: ", authenticatedUserID);
   console.log("User ID: ", UserID);

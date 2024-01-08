@@ -1,7 +1,7 @@
 const asyncHand = require("express-async-handler");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
-const connection = require("../config/dbConfig");
+const pool = require("../config/dbConfig");
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -30,8 +30,8 @@ async function sendOTPEmail(email, otp) {
 const forgetPass = asyncHand(async (req, res) => {
   const { email } = req.body;
 
-  const checkEmailQuery = "SELECT * FROM users WHERE email = ?";
-  connection.query(checkEmailQuery, [email], async (err, userResult) => {
+  const checkEmailQuery = "SELECT * FROM users WHERE email = $1";
+  pool.query(checkEmailQuery, [email], async (err, userResult) => {
     if (err) {
       console.error("Error checking email: ", err);
       res.status(500).json({ error: "Internal Server Error" });
@@ -45,8 +45,8 @@ const forgetPass = asyncHand(async (req, res) => {
     const otp = generateOTP();
 
     const insertOTPQuery =
-      "INSERT INTO otps (email, otp, created_at) VALUES (?, ?, NOW())";
-    connection.query(insertOTPQuery, [email, otp], async (err, result) => {
+      "INSERT INTO otps (email, otp, created_at) VALUES ($1, $2, NOW())";
+    pool.query(insertOTPQuery, [email, otp], async (err, result) => {
       if (err) {
         console.error("Error inserting OTP data: ", err);
         res.status(500).json({ error: "Internal Server Error" });
@@ -85,7 +85,7 @@ const resetPass = asyncHand(async (req, res) => {
     }
 
     const verifyOTPQuery =
-      "SELECT * FROM otps WHERE email = ? AND otp = ? AND created_at >= NOW() - INTERVAL 15 MINUTE";
+      "SELECT * FROM otps WHERE email = $1 AND otp = $2 AND created_at >= NOW() - INTERVAL 15 MINUTE";
 
     const otpResult = await query(verifyOTPQuery, [
       formData.email,
@@ -99,30 +99,26 @@ const resetPass = asyncHand(async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(formData.newPassword, 10);
-    const updatePasswordQuery = "UPDATE users SET password = ? WHERE email = ?";
-    const updateResult = await query(updatePasswordQuery, [
+    const updatePasswordQuery =
+      "UPDATE users SET password = $1 WHERE email = $2";
+    pool.query(
+      updatePasswordQuery,
       hashedPassword,
       formData.email,
-    ]);
-
-    res.json({ message: "Password reset successful" });
+      (err, result) => {
+        if (err) {
+          console.error("Internal Server Error : ", err);
+          res.status(500).json({ error: "Error processing your request." });
+        } else {
+          res.status(200).json({ message: "Password reset successful" });
+        }
+      }
+    );
   } catch (error) {
     console.error("Error during password reset:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
-const query = (sql, values) => {
-  return new Promise((resolve, reject) => {
-    connection.query(sql, values, (err, result) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(result);
-      }
-    });
-  });
-};
 
 module.exports = {
   forgetPass,
