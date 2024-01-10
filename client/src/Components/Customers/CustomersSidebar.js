@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axiosInstance from "../../API/axiosInstance";
-import secureLocalStorage from "react-secure-storage";
 
 const CustomersSidebar = (props) => {
   const navigate = useNavigate();
@@ -27,29 +25,10 @@ const CustomersSidebar = (props) => {
 
   const handleTrigger = () => setIsOpen(!isOpen);
 
-  const handleLogout = async () => {
-    try {
-      const response = await axiosInstance.post(
-        `${process.env.REACT_APP_BASE_URL}/auth/logout`
-      );
-
-      if (response.status === 200) {
-        secureLocalStorage.clear();
-        localStorage.clear();
-        navigate("/");
-        alert("Logged Out Successfully");
-      } else {
-        console.error("Logout failed:", response.error);
-      }
-    } catch (error) {
-      console.error("Error during logout:", error.message);
-    }
-  };
-
   return (
     <>
       <div className="page">
-        <div className="row container-fluid">
+        <div className="row container-fluid ">
           <div className={`col-lg-${isOpen ? "2" : "0"} transition-col`}></div>
           <div className={`col-lg-${isOpen ? "10" : "12"} transition-col`}>
             <div className="content">{props.component}</div>
@@ -128,14 +107,6 @@ const CustomersSidebar = (props) => {
               <span> Watches</span>
             </div>
           </Link>
-
-          <div className="sidebar-position" onClick={handleLogout}>
-            <i
-              style={{ color: "#0bbfe0" }}
-              className="fa-solid fa-arrow-right-from-bracket"
-            />
-            <span> Logout</span>
-          </div>
         </div>
       </div>
     </>

@@ -7,6 +7,8 @@ import LandingPage from "./Pages/LandingPage";
 import HeadphonesPage from "./Pages/Customers/HeadphonesPage";
 import secureLocalStorage from "react-secure-storage";
 import ProductDetailsPage from "./Pages/Customers/ProductDetailsPage";
+import ShoppingCartPage from "./Pages/Customers/ShoppingCartPage";
+import WishlistPage from "./Pages/Customers/WishlistPage";
 
 const App = () => {
   return (
@@ -23,6 +25,8 @@ const App = () => {
             <>
               <Route path="/headphones" element={<HeadphonesPage />} />
               <Route path="/productdetails" element={<ProductDetailsPage />} />
+              <Route path="/shoppingcart" element={<ShoppingCartPage />} />
+              <Route path="/wishlist" element={<WishlistPage />} />
             </>
           ) : (
             <>Please Login</>

@@ -1,11 +1,7 @@
-import React from 'react'
+import React from "react";
 
 const LaptopsPage = () => {
-  return (
-    <div>
-      
-    </div>
-  )
-}
+  return <div></div>;
+};
 
-export default LaptopsPage
+export default LaptopsPage;

@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../API/axiosInstance";
-
 import secureLocalStorage from "react-secure-storage";
 
 const LoginPage = () => {

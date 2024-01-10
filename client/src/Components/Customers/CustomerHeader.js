@@ -1,10 +1,34 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import axiosInstance from "../../API/axiosInstance";
 import secureLocalStorage from "react-secure-storage";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const CustomerHeader = (props) => {
   const navigate = useNavigate();
+  const [totalItems, setTotalItems] = useState(0);
+  const decryptedUID = secureLocalStorage.getItem("uid");
+  const encryptedUID = localStorage.getItem("@secure.n.uid");
+
+  useEffect(() => {
+    const fetchTotalNumberOfCartItems = async () => {
+      try {
+        const res = await axiosInstance.post(
+          `${process.env.REACT_APP_BASE_URL}/customers/fetchTotalNumberOfCartItems`,
+          { decryptedUID }
+        );
+        if (res.status === 200) {
+          setTotalItems(res.data);
+          console.log(res.data);
+        } else {
+          alert("Error Fetching Headphones Data !");
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchTotalNumberOfCartItems();
+  }, [decryptedUID]);
 
   const handleLogout = async () => {
     try {
@@ -13,8 +37,10 @@ const CustomerHeader = (props) => {
       );
 
       if (response.status === 200) {
-        secureLocalStorage.clear();
-        localStorage.clear();
+        secureLocalStorage.removeItem("uid");
+        secureLocalStorage.removeItem("isLogin");
+        secureLocalStorage.removeItem("user_type");
+
         navigate("/");
         alert("Logged Out Successfully");
       } else {
@@ -33,30 +59,34 @@ const CustomerHeader = (props) => {
         </div>
         <div className="col-lg-3">
           <div className="row">
-            <div className="col-lg-3 p-0">
-              {/* <div className="my-2 text-center">
-                <i
-                  className="py-2 px-2 fa-sharp fa-solid fa-recycle fa-xl"
-                  style={{ color: "#2b2b2b" }}
-                ></i>
-              </div> */}
-              <button
-                type="button"
-                class="btn btn-secondary"
-                data-bs-toggle="tooltip"
-                data-bs-placement="bottom"
-                data-bs-title="Tooltip on bottom"
-              >
-                Tooltip on bottom
-              </button>
+            <div className="col-lg-3 px-auto">
+              <Link to={`/wishlist?uid=${encryptedUID}`}>
+                <button
+                  type="button"
+                  className="btn border border-dark border-1 mx-auto my-1"
+                >
+                  <i
+                    className="fa-regular fa-heart fa-xl"
+                    style={{ color: "#292929" }}
+                  />
+                </button>
+              </Link>
             </div>
-            <div className="col-lg-3 p-0">
-              <div className="my-2 text-center">
-                <i
-                  className="py-2 px-2 fa-sharp fa-solid fa-recycle fa-xl"
-                  style={{ color: "#2b2b2b" }}
-                ></i>
-              </div>
+            <div className="col-lg-3 px-auto">
+              <Link to={`/shoppingcart?uid=${encryptedUID}`}>
+                <button
+                  type="button"
+                  className="btn border border-dark border-1 position-relative screen-set mx-auto my-1"
+                >
+                  <i
+                    className="fa-sharp fa-solid fa-cart-shopping fa-xl"
+                    style={{ color: "#292929" }}
+                  ></i>
+                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {totalItems}
+                  </span>
+                </button>
+              </Link>
             </div>
             <div className="col-lg-6">
               <div className="btn btn-outline-dark mt-1" onClick={handleLogout}>

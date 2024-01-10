@@ -6,6 +6,7 @@ import CustomerHeader from "./CustomerHeader";
 
 const HeadphonesContent = () => {
   const [headphonesData, setHeadphonesData] = useState([]);
+  const [wishlistedProducts, setWishlistedProducts] = useState([]);
   const navigate = useNavigate();
   const uid = localStorage.getItem("@secure.n.uid");
   const decryptedUID = secureLocalStorage.getItem("uid");
@@ -28,8 +29,62 @@ const HeadphonesContent = () => {
       }
     };
 
+    const fetchWishlistedProducts = async () => {
+      try {
+        const res = await axiosInstance.post(
+          `${process.env.REACT_APP_BASE_URL}/customers/fetchWishlistedProducts`,
+          {
+            decryptedUID,
+          }
+        );
+
+        if (res.status === 200) {
+          setWishlistedProducts(res.data);
+          console.log("Wishlisted Products", res.data);
+        } else {
+          alert("Error Fetching Wishlisted Products!");
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchWishlistedProducts();
     fetchHeadphonesData();
   }, [decryptedUID]);
+
+  const handleToggleWishlist = async (ap_id) => {
+    try {
+      const isProductWishlisted = wishlistedProducts.some(
+        (product) => product.ap_id === ap_id
+      );
+
+      const res = await axiosInstance.post(
+        `${process.env.REACT_APP_BASE_URL}/customers/toggleWishlist`,
+        {
+          decryptedUID,
+          ap_id,
+          isWishlisted: isProductWishlisted ? 0 : 1,
+        }
+      );
+
+      if (res.status === 200) {
+        window.location.reload();
+        const updatedWishlistedProducts = await axiosInstance.post(
+          `${process.env.REACT_APP_BASE_URL}/customers/fetchWishlistedProducts`,
+          {
+            decryptedUID,
+          }
+        );
+
+        setWishlistedProducts(updatedWishlistedProducts.data);
+      } else {
+        alert("Error Toggling Wishlist!");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const BackToLogin = () => {
     navigate("/");
@@ -129,6 +184,32 @@ const HeadphonesContent = () => {
                   >
                     <button className="btn blue-buttons me-4">Buy Now</button>
                   </Link>
+                  <button
+                    className="btn blue-buttons me-4"
+                    onClick={() => handleToggleWishlist(headphone.ap_id)}
+                  >
+                    {wishlistedProducts.some(
+                      (product) => product.ap_id === headphone.ap_id
+                    ) ? (
+                      <i
+                        className="fas fa-heart"
+                        style={{
+                          fontSize: "1.5rem",
+                          color: "red",
+                          cursor: "pointer",
+                        }}
+                      />
+                    ) : (
+                      <i
+                        className="far fa-heart"
+                        style={{
+                          fontSize: "1.5rem",
+                          color: "gray",
+                          cursor: "pointer",
+                        }}
+                      />
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
