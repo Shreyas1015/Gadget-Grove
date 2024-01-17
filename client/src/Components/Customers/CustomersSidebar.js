@@ -28,16 +28,18 @@ const CustomersSidebar = (props) => {
   return (
     <>
       <div className="page">
-        <div className="row container-fluid ">
-          <div className={`col-lg-${isOpen ? "2" : "0"} transition-col`}></div>
-          <div className={`col-lg-${isOpen ? "10" : "12"} transition-col`}>
-            <div className="content">{props.component}</div>
+        <div className="row container-fluid m-0 p-0">
+          <div className={`col-lg-${isOpen ? "2" : "1"} transition-col`}></div>
+          <div className={`col-lg-${isOpen ? "10" : "11"} transition-col`}>
+            <div className="content py-3 container-fluid">
+              {props.component}
+            </div>
           </div>
         </div>
 
         <div className={`sidebar ${isOpen ? "sidebar--open" : ""}`}>
           <div
-            style={{ color: "#0bbfe0" }}
+            style={{ color: "whitesmoke" }}
             className="trigger"
             onClick={handleTrigger}
           >
@@ -46,7 +48,10 @@ const CustomersSidebar = (props) => {
 
           <Link className="text-decoration-none" to={`/earpods?uid=${uid}`}>
             <div className="sidebar-position">
-              <i style={{ color: "#0bbfe0" }} className="fa-solid fa-user "></i>
+              <i
+                style={{ color: "whitesmoke" }}
+                className="fa-solid fa-user "
+              ></i>
               <span> Earpods</span>
             </div>
           </Link>
@@ -56,7 +61,7 @@ const CustomersSidebar = (props) => {
           >
             <div className="sidebar-position">
               <i
-                style={{ color: "#0bbfe0" }}
+                style={{ color: "whitesmoke" }}
                 className="fa-brands fa-windows"
               ></i>
               <span> Gaming Console</span>
@@ -65,7 +70,7 @@ const CustomersSidebar = (props) => {
           <Link className="text-decoration-none" to={`/headphones?uid=${uid}`}>
             <div className="sidebar-position">
               <i
-                style={{ color: "#0bbfe0" }}
+                style={{ color: "whitesmoke" }}
                 className="fa-brands fa-windows"
               ></i>
               <span> Headphones</span>
@@ -74,7 +79,7 @@ const CustomersSidebar = (props) => {
           <Link className="text-decoration-none" to={`/laptops?uid=${uid}`}>
             <div className="sidebar-position">
               <i
-                style={{ color: "#0bbfe0" }}
+                style={{ color: "whitesmoke" }}
                 className="fa-brands fa-windows"
               ></i>
               <span> Laptops</span>
@@ -83,7 +88,7 @@ const CustomersSidebar = (props) => {
           <Link className="text-decoration-none" to={`/oculus?uid=${uid}`}>
             <div className="sidebar-position">
               <i
-                style={{ color: "#0bbfe0" }}
+                style={{ color: "whitesmoke" }}
                 className="fa-brands fa-windows"
               ></i>
               <span> Oculus</span>
@@ -92,7 +97,7 @@ const CustomersSidebar = (props) => {
           <Link className="text-decoration-none" to={`/speakers?uid=${uid}`}>
             <div className="sidebar-position">
               <i
-                style={{ color: "#0bbfe0" }}
+                style={{ color: "whitesmoke" }}
                 className="fa-brands fa-windows"
               ></i>
               <span> Speakers</span>
@@ -101,7 +106,7 @@ const CustomersSidebar = (props) => {
           <Link className="text-decoration-none" to={`/watches?uid=${uid}`}>
             <div className="sidebar-position">
               <i
-                style={{ color: "#0bbfe0" }}
+                style={{ color: "whitesmoke" }}
                 className="fa-brands fa-windows"
               ></i>
               <span> Watches</span>

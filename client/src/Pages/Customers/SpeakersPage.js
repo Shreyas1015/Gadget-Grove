@@ -1,11 +1,13 @@
-import React from 'react'
+import React from "react";
+import CustomersSidebar from "../../Components/Customers/CustomersSidebar";
+import SpeakersContent from "../../Components/Customers/SpeakersContent";
 
 const SpeakersPage = () => {
   return (
-    <div>
-      
-    </div>
-  )
-}
+    <>
+      <CustomersSidebar component={<SpeakersContent />} />
+    </>
+  );
+};
 
-export default SpeakersPage
+export default SpeakersPage;

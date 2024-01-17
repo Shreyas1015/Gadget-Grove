@@ -65,24 +65,62 @@ const login = asyncHand((req, res) => {
   }
 });
 
-const refresh = asyncHand((req, res) => {
+const refresh = asyncHand(async (req, res) => {
   const refreshToken = req.cookies["refreshToken"];
-  if (!refreshToken) return res.sendStatus(401);
+  const password = req.body.password;
+  const decryptedUID = req.body.decryptedUID;
+
+  console.log("Data for refresh ", req.body, refreshToken);
+  if (!refreshToken || !password) {
+    console.error("Invalid request: Missing refresh token or password");
+    return res
+      .status(400)
+      .json({ message: "Bad Request: Missing refresh token or password" });
+  }
 
   const user = verifyRefreshToken(refreshToken);
-  if (!user) return res.sendStatus(403);
 
-  console.log("Received Refresh Token:", refreshToken);
+  if (!user) {
+    console.error("Invalid refresh token");
+    return res
+      .status(403)
+      .json({ message: "Forbidden: Invalid refresh token" });
+  }
 
-  const token = jwt.sign(user, secretKey, { expiresIn: "10h" });
-  const newRefreshToken = generateRefreshToken(user.email);
+  console.log("Received Refresh Token and Password");
 
-  console.log("New Access Token:", token);
-  console.log("New Refresh Token:", newRefreshToken);
+  try {
+    const query = "SELECT password FROM users WHERE uid = $1";
+    const result = await pool.query(query, [decryptedUID]);
 
-  res.cookie("token", token, { httpOnly: true });
-  res.cookie("refreshToken", newRefreshToken, { httpOnly: true });
-  res.sendStatus(200);
+    if (result.rows.length === 0) {
+      console.error("User not found");
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const storedHashedPassword = result.rows[0].password;
+    const passwordMatch = await bcrypt.compare(password, storedHashedPassword);
+
+    if (!passwordMatch) {
+      console.error("Incorrect password");
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: Incorrect password" });
+    }
+
+    const token = jwt.sign(user, secretKey, { expiresIn: "10h" });
+    const newRefreshToken = generateRefreshToken(user.email);
+
+    console.log("New Access Token:", token);
+    console.log("New Refresh Token:", newRefreshToken);
+
+    res.cookie("token", token, { httpOnly: true });
+    res.cookie("refreshToken", newRefreshToken, { httpOnly: true });
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("Error querying database:", err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 });
 
 const handleUserExists = (res) => {

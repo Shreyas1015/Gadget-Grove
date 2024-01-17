@@ -204,8 +204,12 @@ const PrdouctDetailsContent = () => {
                 M.R.P : &#8377; {productData.price}
               </p>
               <p className="my-3 fw-semibold" style={{ color: "purple" }}>
-                Deal Of The Day : &#8377; {calculateDiscountedPrice()}
+                Deal Of The Day : &#8377; {calculateDiscountedPrice()}{" "}
+                <span className="badge text-bg-dark mx-2 py-2">
+                  {productData.discounts.percentage} % Discount
+                </span>
               </p>
+
               <p className="my-3 text-secondary">{productData.description}</p>
               <div className="my-3 d-flex justfiy-content-around">
                 <div className="mx-2 text-center">

@@ -105,14 +105,6 @@
   height: 100%;
 }
 
-.content {
-  width: calc(100% - 50px);
-  margin-left: auto;
-  padding: 15px;
-  height: 100%;
-  word-break: break-word;
-}
-
 .sidebar {
   position: fixed;
   top: 0;
@@ -134,8 +126,8 @@
 }
 
 .sidebar .sidebar-position:hover {
-  background-color: #3f5159;
-  border-right: 5px #0bbfe0 solid;
+  background-color: #f5f5f56b;
+  border-right: 5px white solid;
 }
 
 .sidebar svg {
@@ -191,4 +183,3 @@
   top: 85%;
   color: #99896f;
 }
-

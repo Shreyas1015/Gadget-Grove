@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from "react";
 import CustomerHeader from "./CustomerHeader";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../API/axiosInstance";
 import secureLocalStorage from "react-secure-storage";
+import { loadStripe } from "@stripe/stripe-js";
+
+const stripePromise = loadStripe(
+  "pk_test_51NR99USFBsMizJtqkTEVzg5NH5krlCPORUl2YLORi7ZfwmINPiYXFE33nHAoDMymOE5XByoIchUj7GnsrG7J1ZNB00Bv8WPufs"
+);
 
 const ShoppingCartContent = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
+  const [paymentError, setPaymentError] = useState(null);
   const uid = localStorage.getItem("@secure.n.uid");
   const decryptedUID = secureLocalStorage.getItem("uid");
 
@@ -40,10 +46,8 @@ const ShoppingCartContent = () => {
       const currentDate = new Date();
 
       if (currentDate <= validUntilDate) {
-        const discountedPrice = (
-          item.price -
-          (item.price * dealOfTheDay.percentage) / 100
-        ).toFixed(2);
+        const discountedPrice =
+          item.price - (item.price * dealOfTheDay.percentage) / 100;
         return discountedPrice;
       }
     }
@@ -100,6 +104,71 @@ const ShoppingCartContent = () => {
     }
   };
 
+  const calculateTotalPrice = () => {
+    let totalPrice = 0;
+
+    cartItems.forEach((item) => {
+      totalPrice +=
+        calculateDiscountedPrice(item) * item.quantity + item.shipping.cost;
+    });
+
+    return totalPrice;
+  };
+
+  const handleCheckout = async () => {
+    const stripe = await stripePromise;
+
+    const totalShippingCost = cartItems.reduce(
+      (total, item) => total + item.shipping.cost,
+      0
+    );
+
+    const lineItems = cartItems.map((item) => ({
+      price_data: {
+        currency: "inr",
+        product_data: {
+          name: item.title,
+        },
+        unit_amount: parseInt(calculateDiscountedPrice(item) * 100),
+      },
+      quantity: item.quantity,
+    }));
+
+    lineItems.push({
+      price_data: {
+        currency: "inr",
+        product_data: {
+          name: "Shipping Cost",
+        },
+        unit_amount: parseInt(totalShippingCost * 100),
+      },
+      quantity: 1,
+    });
+
+    try {
+      const response = await axiosInstance.post(
+        `${process.env.REACT_APP_BASE_URL}/customers/create-checkout-session`,
+        {
+          lineItems,
+          decryptedUID,
+        }
+      );
+
+      const session = response.data;
+
+      const result = await stripe.redirectToCheckout({
+        sessionId: session.id,
+      });
+
+      if (result.error) {
+        setPaymentError(result.error.message);
+      }
+    } catch (error) {
+      console.log(error);
+      setPaymentError("An error occurred. Please try again later.");
+    }
+  };
+
   const BackToLogin = () => {
     navigate("/");
   };
@@ -124,7 +193,7 @@ const ShoppingCartContent = () => {
         {cartItems.length === 0 ? (
           <div className="container text-center fw-bold">
             <h2>Your shopping cart is empty.</h2>
-            {/* You can provide a link or button to redirect the user to the shopping page */}
+
             <button
               onClick={() => navigate(`/headphones?uid=${uid}`)}
               className="btn blue-buttons"
@@ -222,7 +291,7 @@ const ShoppingCartContent = () => {
                             {calculateEstimatedDeliveryDate(cartItem)}
                           </p>
                           <h5>
-                            Total Amount:{" "}
+                            Total Amount:
                             {calculateDiscountedPrice(cartItem) *
                               cartItem.quantity +
                               cartItem.shipping.cost}
@@ -234,6 +303,18 @@ const ShoppingCartContent = () => {
                 </div>
               </div>
             ))}
+            <div>
+              <h3>Total Price: &#8377; {calculateTotalPrice()}</h3>
+              <button className="btn btn-success mt-3" onClick={handleCheckout}>
+                Proceed to Checkout
+              </button>
+              {paymentError && (
+                <p className="text-danger mt-3 mx-2">{paymentError}</p>
+              )}
+              <Link to="/headphones" className="btn btn-dark mt-3 mx-2">
+                Continue Shopping
+              </Link>
+            </div>
           </>
         )}
       </div>
